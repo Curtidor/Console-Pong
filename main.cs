@@ -2,82 +2,87 @@ using System;
 
 namespace Pong
 {
-    class Program
+    class Paddle
     {
-        private int[] Player1POS = new int[] { 0, 0 };
-        private int[] Player2POS = new int[] { 0, 0 };
-        private const int width = 80;
-        private const int height = 30;
-        private int[,] board = new int[height, width];
-        static void Main(string[] args)
-        {
-            Program master = new();
-            master.Start();
-            
-        }
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int height = 2;
 
- 
-        private void Start()
+        public Paddle(int setX, int setY)
         {
+            X = setX;
+            Y = setY;
+        }
+    }
+
+    class Game
+    {
+        private readonly int width = 101;
+        private readonly int height = 31;
+        private int[,] staticPixelMap;
+        private int[,] pixelMapCopy;
+
+        private Paddle paddle1;
+        private Paddle paddle2;
+        public void Start()
+        {
+            paddle1 = new Paddle(2, height / 2);
+            paddle2 = new Paddle(width-3, height / 2);
+            staticPixelMap = new int[height, width];
             for (int y = 0; y < height; y++)
             {
+                if (y % 2 == 0) { staticPixelMap[y, width / 2] = 124; }
+                if (y == height/2) { staticPixelMap[y, width / 2] = 42; }
                 for (int x = 0; x < width; x++)
                 {
-                    board[y, x] = 32; // code for blank space
+                    if (x == 0) 
+                    { 
+                        staticPixelMap[y, x] = 35; 
+                        staticPixelMap[y, width-1] = 35;
+                    }
+                    if (y == 0 || y == height-1) { staticPixelMap[y, x] = 35;} // 35 is used to add a boarder to the pixelmap
+                    if (staticPixelMap[y, x] == 0) { staticPixelMap[y, x] = 32; }
                 }
             }
-            Player1POS[0] = 1;
-            Player1POS[1] = height / 2;
-            Player2POS[0] = width-2;
-            Player2POS[1] = height / 2;
-            board[Player2POS[1], Player2POS[0]] = 124;
-            board[Player1POS[1], Player1POS[0]] = 124;
-
-
             DrawFrame();
             GameLoop();
         }
 
         private void DrawFrame()
         {
-            Console.SetCursorPosition(0, 0);
-            Console.Write("{0}".PadRight(width+4,(char)35), (char)35);
+            Console.CursorVisible = false;
+            pixelMapCopy = staticPixelMap.Clone() as int[,];
             for (int y = 0; y < height; y++)
             {
+                if (InRange(paddle1.Y, paddle1.height + paddle1.Y, y)) { pixelMapCopy[y, paddle1.X] = 124; }
+                if (InRange(paddle2.Y, paddle2.height + paddle2.Y, y)) { pixelMapCopy[y, paddle2.X] = 124; }
                 for (int x = 0; x < width; x++)
                 {
-                    if (x == 0)
-                    {
-                        Console.SetCursorPosition(0, y);
-                        Console.Write("{0}", (char)35);
-                        Console.SetCursorPosition(width+1, y);
-                        Console.Write("{0}", (char)35);
-                    }
-                    Console.SetCursorPosition(x+1, y+1);
-                    Console.Write((char)board[y, x]);                 
+                    Console.SetCursorPosition(x, y);
+                    Console.Write((char)pixelMapCopy[y, x]);
                 }
             }
-            Console.SetCursorPosition(0, height);
-            Console.Write("{0}".PadRight(width+4, (char)35), (char)35);
         }
 
-    
 
         private void GameLogic(ConsoleKeyInfo key)
         {
-           if (key.Key == ConsoleKey.W && Player1POS[1] < height) { Player1POS[1]++; }
-           if (key.Key == ConsoleKey.S && Player1POS[1] >= 0) { Player1POS[1]--; }
-           if (key.Key == ConsoleKey.UpArrow && Player2POS[1] < height) { Player2POS[1]++; }
-           if (key.Key == ConsoleKey.DownArrow && Player2POS[1] >= 0) { Player2POS[1]--; }
-           board[Player2POS[1], Player2POS[0]] = 124;
-           board[Player1POS[1], Player1POS[0]] = 124;
+            if (key.Key == ConsoleKey.W && paddle1.Y + paddle1.height > paddle1.height+1) { paddle1.Y--; }
+            if (key.Key == ConsoleKey.S && paddle1.Y + paddle1.height < height - 2) { paddle1.Y++; }
+            if (key.Key == ConsoleKey.UpArrow && paddle2.Y + paddle2.height > paddle2.height+1) { paddle2.Y--; }
+            if (key.Key == ConsoleKey.DownArrow && paddle2.Y + paddle2.height < height - 2 ) { paddle2.Y++; }
+        }
+
+        public static bool InRange(int low, int high, int num)
+        {
+            if(low <= num && num <= high) { return true; }
+            return false;
         }
 
         private void GameLoop()
         {
             while (true)
             {
-               
                 if (Console.KeyAvailable)
                 {
                     var key = Console.ReadKey(true);
@@ -86,9 +91,6 @@ namespace Pong
                     if (key.Key == ConsoleKey.Backspace) { break; }
                 }
             }
-           
         }
     }
-
-    
 }
